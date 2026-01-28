@@ -1,0 +1,9 @@
+-- CreateTable
+CREATE TABLE "Log" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "date" TEXT NOT NULL,
+    "mealName" TEXT NOT NULL,
+    "veggies" TEXT NOT NULL,
+    "vitamins" TEXT NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Leaf,
   Heart,
@@ -9,19 +9,15 @@ import {
   Plus,
   ChevronLeft,
   Check,
-  Info,
   Droplets,
   Sun,
-  Eye,
-  Bone,
   History,
   TrendingUp,
   AlertCircle,
-  ArrowRight,
   X,
 } from "lucide-react";
 
-// --- Database ข้อมูลผัก (Vegetable Data) ---
+// --- Database ข้อมูลผัก ---
 const VEGETABLE_DATA = [
   {
     id: 1,
@@ -43,7 +39,7 @@ const VEGETABLE_DATA = [
   },
   {
     id: 3,
-    name: "บล็อคโคลี (Broccoli)",
+    name: "บล็อกโคลี (Broccoli)",
     icon: "🥦",
     vitamins: ["วิตามิน C", "วิตามิน K", "โฟเลต", "ไฟเบอร์"],
     benefits: "กระตุ้นการขับถ่าย, เสริมภูมิคุ้มกัน",
@@ -328,15 +324,6 @@ export default function DailyVeggieLog() {
   const [history, setHistory] = useState<any[]>([]); // เก็บข้อมูลย้อนหลัง
   const [showModal, setShowModal] = useState(false); // ควบคุมการแสดง Popup
   const [mealName, setMealName] = useState(""); // เพิ่ม state เก็บชื่อเมนู
-  const [loading, setLoading] = useState(false);
-
-  // Initial Load
-  useEffect(() => {
-    fetch("/api/logs")
-      .then((res) => res.json())
-      .then((data) => setHistory(data))
-      .catch((err) => console.error("Error fetching logs:", err));
-  }, []);
 
   // ฟังก์ชันเลือก/ยกเลิกเลือกผัก
   const toggleVeggie = (id: number) => {
@@ -350,16 +337,16 @@ export default function DailyVeggieLog() {
     const selectedVeggies = VEGETABLE_DATA.filter((v) =>
       selectedIds.includes(v.id),
     );
-    const allVitamins = Array.from(
-      new Set(selectedVeggies.flatMap((v) => v.vitamins)),
-    );
-    const allDiseases = Array.from(
-      new Set(
+    const allVitamins = [
+      ...new Set(selectedVeggies.flatMap((v) => v.vitamins)),
+    ];
+    const allDiseases = [
+      ...new Set(
         selectedVeggies.flatMap((v) =>
           v.prevention.split(", ").map((s) => s.trim()),
         ),
       ),
-    );
+    ];
 
     return {
       veggies: selectedVeggies,
@@ -370,8 +357,7 @@ export default function DailyVeggieLog() {
   }, [selectedIds]);
 
   // บันทึกข้อมูลลง History
-  const saveLog = async () => {
-    setLoading(true);
+  const saveLog = () => {
     const newLog = {
       id: Date.now(),
       date: new Date().toLocaleDateString("th-TH", {
@@ -385,35 +371,18 @@ export default function DailyVeggieLog() {
       vitamins: analysis.vitamins,
     };
 
-    try {
-      const res = await fetch("/api/logs", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newLog),
-      });
-      const data = await res.json();
+    setHistory((prev) => {
+      const updated = [newLog, ...prev];
+      return updated.slice(0, 10);
+    });
+    setSelectedIds([]);
+    setMealName("");
 
-      if (data.success) {
-        setHistory((prev) => {
-          const updated = [data.log, ...prev];
-          return updated.slice(0, 10);
-        });
-
-        // ถ้าบันทึกครบ 3, 6, 9... ให้แสดง Modal ถาม
-        // Use updated history length simulation since state update is async
-        const currentLen = history.length + 1;
-        if (currentLen % 3 === 0) {
-          setShowModal(true);
-        } else {
-          setView("home");
-        }
-      }
-    } catch (error) {
-      console.error("Failed to save log", error);
-    } finally {
-      setLoading(false);
-      setSelectedIds([]);
-      setMealName("");
+    // ถ้าบันทึกครบ 3, 6, 9... ให้แสดง Modal ถาม
+    if ((history.length + 1) % 3 === 0) {
+      setShowModal(true);
+    } else {
+      setView("home");
     }
   };
 
@@ -421,9 +390,9 @@ export default function DailyVeggieLog() {
   const getInsight = () => {
     if (history.length < 3) return null;
     const lastThreeMeals = history.slice(0, 3);
-    const allVitsReceived = Array.from(
-      new Set(lastThreeMeals.flatMap((h) => h.vitamins)),
-    );
+    const allVitsReceived = [
+      ...new Set(lastThreeMeals.flatMap((h) => h.vitamins)),
+    ];
 
     // หาว่าขาดอะไรไปบ้าง
     const missing = ESSENTIAL_NUTRIENTS.filter(
@@ -504,6 +473,7 @@ export default function DailyVeggieLog() {
       >
         <History size={24} />
       </button>
+
       <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mb-6 shadow-sm">
         <Leaf size={48} className="text-green-600" />
       </div>
@@ -513,6 +483,7 @@ export default function DailyVeggieLog() {
         <br />
         วันนี้คุณทานผักอะไรไปบ้าง?
       </p>
+
       <button
         onClick={() => {
           setMealName(""); // เคลียร์ชื่อเมนูเก่าเมื่อกดเริ่มใหม่
@@ -523,6 +494,7 @@ export default function DailyVeggieLog() {
         <Plus size={20} />
         บันทึกมื้ออาหาร
       </button>
+
       {history.length > 0 && (
         <p className="mt-4 text-xs text-gray-400">
           บันทึกไปแล้ว {history.length} มื้อ
@@ -545,6 +517,7 @@ export default function DailyVeggieLog() {
           <div className="w-8"></div>
         </div>
         <p className="text-2xl font-bold text-gray-800">คุณทานอะไรไปบ้าง?</p>
+
         {/* เพิ่มช่องกรอกชื่อเมนู */}
         <div className="mt-3 mb-2">
           <input
@@ -559,6 +532,7 @@ export default function DailyVeggieLog() {
           เลือกรายการผักที่คุณรับประทาน
         </p>
       </div>
+
       <div className="flex-1 overflow-y-auto px-6 pb-24 scrollbar-hide">
         <div className="grid grid-cols-2 gap-3 mt-4">
           {VEGETABLE_DATA.map((veg) => {
@@ -568,14 +542,14 @@ export default function DailyVeggieLog() {
                 key={veg.id}
                 onClick={() => toggleVeggie(veg.id)}
                 className={`
-                                    relative p-4 rounded-2xl text-left transition-all duration-200 border-2
-                                    flex flex-col items-center justify-center gap-2 aspect-square
-                                    ${
-                                      isSelected
-                                        ? "border-green-500 bg-green-50 shadow-md transform scale-[1.02]"
-                                        : "border-gray-100 bg-white hover:border-green-200 hover:bg-gray-50"
-                                    }
-                                `}
+                  relative p-4 rounded-2xl text-left transition-all duration-200 border-2
+                  flex flex-col items-center justify-center gap-2 aspect-square
+                  ${
+                    isSelected
+                      ? "border-green-500 bg-green-50 shadow-md transform scale-[1.02]"
+                      : "border-gray-100 bg-white hover:border-green-200 hover:bg-gray-50"
+                  }
+                `}
               >
                 {isSelected && (
                   <div className="absolute top-2 right-2 bg-green-500 text-white rounded-full p-0.5">
@@ -595,6 +569,7 @@ export default function DailyVeggieLog() {
           })}
         </div>
       </div>
+
       <div className="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-white via-white to-transparent">
         <button
           onClick={() => {
@@ -602,13 +577,13 @@ export default function DailyVeggieLog() {
           }}
           disabled={selectedIds.length === 0}
           className={`
-                        w-full py-4 rounded-2xl font-semibold shadow-lg transition-all
-                        ${
-                          selectedIds.length > 0
-                            ? "bg-green-600 text-white hover:bg-green-700 hover:shadow-green-200"
-                            : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                        }
-                    `}
+            w-full py-4 rounded-2xl font-semibold shadow-lg transition-all
+            ${
+              selectedIds.length > 0
+                ? "bg-green-600 text-white hover:bg-green-700 hover:shadow-green-200"
+                : "bg-gray-200 text-gray-400 cursor-not-allowed"
+            }
+          `}
         >
           วิเคราะห์ ({selectedIds.length})
         </button>
@@ -631,6 +606,7 @@ export default function DailyVeggieLog() {
           </span>
           <div className="w-8"></div>
         </div>
+
         <div className="flex items-center gap-4">
           <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center text-green-600">
             <Activity size={32} />
@@ -643,6 +619,7 @@ export default function DailyVeggieLog() {
           </div>
         </div>
       </div>
+
       <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
         <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
           <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
@@ -660,6 +637,7 @@ export default function DailyVeggieLog() {
             ))}
           </div>
         </div>
+
         <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
           <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
             <Heart size={18} className="text-rose-500" /> ดีต่อสุขภาพอย่างไร
@@ -677,6 +655,7 @@ export default function DailyVeggieLog() {
             และยังช่วยเสริมสร้างภูมิคุ้มกันร่างกายให้แข็งแรง
           </p>
         </div>
+
         <div>
           <h3 className="font-semibold text-gray-800 mb-3 ml-1">
             รายละเอียดผักแต่ละชนิด
@@ -706,13 +685,13 @@ export default function DailyVeggieLog() {
           </div>
         </div>
       </div>
+
       <div className="p-6 bg-white border-t border-gray-100">
         <button
           onClick={saveLog}
-          disabled={loading}
-          className="w-full bg-gray-800 text-white py-4 rounded-2xl font-medium shadow-lg hover:bg-gray-900 transition-colors disabled:bg-gray-400"
+          className="w-full bg-gray-800 text-white py-4 rounded-2xl font-medium shadow-lg hover:bg-gray-900 transition-colors"
         >
-          {loading ? "กำลังบันทึก..." : "บันทึกเสร็จสิ้น"}
+          บันทึกเสร็จสิ้น
         </button>
       </div>
     </div>
@@ -736,6 +715,7 @@ export default function DailyVeggieLog() {
           10 มื้อล่าสุดของคุณ
         </h2>
       </div>
+
       <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
         {/* Special Insight (Every 3 meals logic) */}
         {insightData && history.length >= 3 && (
@@ -755,6 +735,7 @@ export default function DailyVeggieLog() {
                 {insightData.received.length > 5 ? "และอื่นๆ" : ""}
               </p>
             </div>
+
             {insightData.missing.length > 0 ? (
               <div>
                 <div className="flex items-start gap-2 mb-2">
@@ -767,6 +748,7 @@ export default function DailyVeggieLog() {
                     ไปบ้าง
                   </p>
                 </div>
+
                 {insightData.suggestions.length > 0 && (
                   <div className="text-xs bg-white/10 rounded-lg p-3">
                     <p className="mb-2 text-indigo-100">ครั้งหน้าลองเติม:</p>
@@ -796,6 +778,7 @@ export default function DailyVeggieLog() {
             )}
           </div>
         )}
+
         {/* List of Meals */}
         <div className="space-y-3">
           {history.length === 0 ? (
@@ -853,10 +836,11 @@ export default function DailyVeggieLog() {
   );
 
   return (
-    <div className="bg-gray-100 min-h-screen flex items-center justify-center font-sans p-4 md:p-0">
-      <div className="w-full max-w-md h-[100dvh] bg-white shadow-2xl md:rounded-3xl md:h-[850px] overflow-hidden relative border border-gray-200">
+    <div className="bg-gray-100 min-h-screen flex items-center justify-center font-sans">
+      <div className="w-full max-w-md h-[100dvh] bg-white shadow-2xl md:rounded-3xl md:h-[850px] overflow-hidden relative">
         {/* Show Modal Overlay */}
         {showModal && <InsightModal />}
+
         {view === "home" && <HomeScreen />}
         {view === "select" && <SelectionScreen />}
         {view === "result" && <ResultScreen />}
