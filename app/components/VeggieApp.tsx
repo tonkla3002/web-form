@@ -21,6 +21,9 @@ import {
   ArrowRight,
   X,
   LogOut,
+  Sprout,
+  TreeDeciduous,
+  Bean,
 } from "lucide-react";
 
 // --- Database ข้อมูลผัก (Vegetable Data) ---
@@ -376,53 +379,265 @@ const InsightModal = ({ showModal, setShowModal, setView }: any) => {
   );
 };
 
-const HomeScreen = ({ setView, history, setMealName, user }: any) => (
-  <div className="flex flex-col items-center justify-center h-full text-center px-6 animate-fade-in relative">
-    {/* Logout Button (Top Left) */}
-    <form action={handleSignOut} className="absolute top-6 left-6">
-      <button className="p-2 bg-gray-100 rounded-full text-gray-600 hover:bg-gray-200 transition-colors">
-        <LogOut size={24} />
-      </button>
-    </form>
+const calculatePlantStats = (history: any[]) => {
+  if (!history || history.length === 0)
+    return { daysCompleted: 0, todayMeals: 0 };
 
-    {/* History Button (Top Right) */}
-    <button
-      onClick={() => setView("history")}
-      className="absolute top-6 right-6 p-2 bg-gray-100 rounded-full text-gray-600 hover:bg-gray-200 transition-colors"
-    >
-      <History size={24} />
-    </button>
-    <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mb-6 shadow-sm">
-      <Leaf size={48} className="text-green-600" />
+  // Group logs by date (YYYY-MM-DD or displayed date string)
+  const logsByDate: { [key: string]: number } = {};
+
+  // Use today's date string matching the format stored in logs
+  const today =
+    new Date()
+      .toLocaleDateString("th-TH", {
+        day: "numeric",
+        month: "short",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+      .split(" ")[0] +
+    " " +
+    new Date().toLocaleDateString("th-TH", { month: "short" });
+
+  // Date format in logs is "1 Feb 12:00" approx. Let's simplify and assume the date part is the first 2 chunks if space separated
+  // Actually, the log date format is: new Date().toLocaleDateString("th-TH", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })
+  // Example: "1 ก.พ. 12:00"
+  // We need to extract the date part "1 ก.พ." to group by day.
+
+  history.forEach((log) => {
+    // Split by space and take first 2 parts as date (Day + Month)
+    const dateParts = log.date.split(" ");
+    const dateKey = `${dateParts[0]} ${dateParts[1]}`;
+    logsByDate[dateKey] = (logsByDate[dateKey] || 0) + 1;
+  });
+
+  let daysCompleted = 0;
+  Object.values(logsByDate).forEach((count) => {
+    if (count >= 3) daysCompleted++;
+  });
+
+  // Get today's count
+  const todayDate = new Date().toLocaleDateString("th-TH", {
+    day: "numeric",
+    month: "short",
+  });
+  // Find logs that start with todayDate
+  // Note: The date string format might vary slightly depending on locale implementation in Node vs Browser
+  // But since we generate it in the app using the same locale, it should match.
+  // Let's count explicitly.
+  const todayMeals = history.filter((log) =>
+    log.date.startsWith(todayDate),
+  ).length;
+
+  return { daysCompleted, todayMeals };
+};
+
+const PlantPot = ({
+  daysCompleted,
+  todayMeals,
+}: {
+  daysCompleted: number;
+  todayMeals: number;
+}) => {
+  // Determine Plant Stage
+  // Stage 0: Seed (0 days)
+  // Stage 1: Sprout (1-2 days)
+  // Stage 2: Small Plant (3-5 days)
+  // Stage 3: Big Plant (6-9 days)
+  // Stage 4: Flowering (10+ days)
+
+  let Icon = Leaf;
+  let color = "text-green-600";
+  let size = 48;
+  let stageName = "เมล็ดพันธุ์";
+
+  if (daysCompleted >= 10) {
+    Icon = Sun; // Placeholder for flower/tree
+    stageName = "ต้นไม้ใหญ่";
+    size = 64;
+    color = "text-orange-500";
+  } else if (daysCompleted >= 6) {
+    Icon = TreeDeciduous;
+    stageName = "ต้นกล้าแข็งแรง";
+    size = 56;
+    color = "text-green-700";
+  } else if (daysCompleted >= 3) {
+    Icon = Sprout;
+    stageName = "ต้นอ่อน";
+    color = "text-green-500";
+  } else if (daysCompleted >= 1) {
+    Icon = Bean;
+    stageName = "งอกเงย";
+    size = 40;
+    color = "text-emerald-500";
+  } else {
+    Icon = Leaf; // Seed/Leaf representation
+    stageName = "เมล็ดพันธุ์";
+    color = "text-stone-400";
+  }
+
+  // Calculate progress for current day (0-3)
+  const dailyProgress = (Math.min(todayMeals, 3) / 3) * 100;
+
+  return (
+    <div className="flex flex-col items-center mb-8 animate-fade-in text-center">
+      <div className="relative w-32 h-32 flex items-center justify-center">
+        {/* Pot/Background Circle */}
+        <div className="absolute inset-0 bg-gradient-to-t from-green-50 to-blue-50 rounded-full shadow-inner border-4 border-white"></div>
+
+        {/* Progress Ring */}
+        <svg className="absolute inset-0 w-full h-full -rotate-90">
+          <circle
+            cx="64"
+            cy="64"
+            r="60"
+            stroke="#f0fdf4"
+            strokeWidth="6"
+            fill="transparent"
+          />
+          <circle
+            cx="64"
+            cy="64"
+            r="60"
+            stroke="#22c55e"
+            strokeWidth="6"
+            fill="transparent"
+            strokeDasharray="377"
+            strokeDashoffset={377 - (377 * dailyProgress) / 100}
+            strokeLinecap="round"
+            className="transition-all duration-1000 ease-out"
+          />
+        </svg>
+
+        {/* Plant Icon */}
+        <div
+          className={`relative z-10 transition-all duration-500 ${todayMeals >= 3 ? "animate-bounce" : ""}`}
+        >
+          <Icon size={size} className={color} />
+        </div>
+      </div>
+
+      <div className="mt-4">
+        <h3 className="font-bold text-gray-800 text-lg">{stageName}</h3>
+        <p className="text-xs text-gray-500">
+          เติบโตมาแล้ว{" "}
+          <span className="text-green-600 font-bold">{daysCompleted}</span> วัน
+        </p>
+        <div className="flex items-center gap-1 justify-center mt-1">
+          {[1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className={`w-2 h-2 rounded-full ${todayMeals >= i ? "bg-green-500" : "bg-gray-200"}`}
+            />
+          ))}
+        </div>
+      </div>
     </div>
-    <h1 className="text-3xl font-bold text-gray-800 mb-2">Veggie Log</h1>
-    {user && (
-      <p className="text-sm font-medium text-green-700 mb-1">
-        สวัสดี, {user.name}
+  );
+};
+
+// Need access to TreeDeciduous, Sprout, Bean icons.
+// Adding them to imports in next step or assuming they exist/replace if not.
+// Lucide icons: TreeDeciduous, Sprout, Bean might not be imported yet.
+// I will stick to existing icons first or use standard ones available.
+// If specific icons are missing, I will stick to Leaf/Sun or import in next tool call.
+// Let's use simple ones available in import list first or verify imports.
+// Imports at line 6-24 do NOT include TreeDeciduous, Sprout, Bean.
+// I will modify imports FIRST or in PARALLEL.
+// Since I can only do contiguous edits efficiently with this tool, I will combine changes or do two steps.
+// I'll assume I can add imports via Replace? No, easier to just use available icons or generic ones for now,
+// OR simpler: Replace the imports in a separate call.
+// I will use Leaf, Sun, and maybe `User` or others as placeholders if needed,
+// BUT better to add the imports.
+// I will comment out the missing icons usage and use available ones for a safe compilation first?
+// No, I'll update imports in a separate `replace_file_content` first.
+// Wait, I am in the prompt for `PlantPot`.
+// I will use `Leaf` for now to avoid errors, then I will update imports and icons.
+// Actually, let's use `Leaf` with different colors/sizes for stages as a safe MVP.
+
+const PlantGallery = () => {
+  const stages = [
+    { days: 0, label: "0 วัน" },
+    { days: 1, label: "1 วัน" },
+    { days: 3, label: "3 วัน" },
+    { days: 6, label: "6 วัน" },
+    { days: 10, label: "10+ วัน" },
+  ];
+
+  return (
+    <div className="mt-8 mb-4 w-full bg-white/50 rounded-2xl p-4 backdrop-blur-sm">
+      <p className="text-xs text-gray-400 mb-3 font-medium">
+        เส้นทางการเติบโต (Demo)
       </p>
-    )}
-    <p className="text-gray-500 mb-10 max-w-xs">
-      บันทึกมื้ออาหารเพื่อสุขภาพที่ดีของคุณ
-      <br />
-      วันนี้คุณทานผักอะไรไปบ้าง?
-    </p>
-    <button
-      onClick={() => {
-        setMealName(""); // เคลียร์ชื่อเมนูเก่าเมื่อกดเริ่มใหม่
-        setView("select");
-      }}
-      className="w-full max-w-xs bg-green-600 hover:bg-green-700 text-white font-medium py-4 rounded-2xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2"
-    >
-      <Plus size={20} />
-      บันทึกมื้ออาหาร
-    </button>
-    {history.length > 0 && (
-      <p className="mt-4 text-xs text-gray-400">
-        บันทึกไปแล้ว {history.length} มื้อ
+      <div className="flex justify-between items-end px-2">
+        {stages.map((stage) => (
+          <div key={stage.days} className="flex flex-col items-center gap-1">
+            <div className="transform scale-50 -mb-4 origin-bottom">
+              <PlantPot daysCompleted={stage.days} todayMeals={3} />
+            </div>
+            <span className="text-[10px] text-gray-500">{stage.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const HomeScreen = ({ setView, history, setMealName, user }: any) => {
+  const { daysCompleted, todayMeals } = useMemo(
+    () => calculatePlantStats(history),
+    [history],
+  );
+
+  return (
+    <div className="flex flex-col items-center justify-center h-full text-center px-6 animate-fade-in relative pt-10">
+      {/* Logout Button (Top Left) */}
+      <form action={handleSignOut} className="absolute top-6 left-6 z-20">
+        <button className="p-2 bg-gray-100 rounded-full text-gray-600 hover:bg-gray-200 transition-colors">
+          <LogOut size={20} />
+        </button>
+      </form>
+
+      {/* History Button (Top Right) */}
+      <button
+        onClick={() => setView("history")}
+        className="absolute top-6 right-6 z-20 p-2 bg-gray-100 rounded-full text-gray-600 hover:bg-gray-200 transition-colors"
+      >
+        <History size={20} />
+      </button>
+
+      <div className="mb-2">
+        <h1 className="text-3xl font-bold text-gray-800">Veggie Log</h1>
+        {user && (
+          <p className="text-sm font-medium text-green-700">
+            สวัสดี, {user.name}
+          </p>
+        )}
+      </div>
+
+      {/* Plant Feature */}
+      <PlantPot daysCompleted={daysCompleted} todayMeals={todayMeals} />
+
+      {/* Show Gallery for User to See Stages */}
+      <PlantGallery />
+
+      <p className="text-gray-500 mb-4 max-w-xs text-sm">
+        บันทึกมื้ออาหารวันนี้คุณทานอะไรไปบ้าง?
       </p>
-    )}
-  </div>
-);
+
+      <button
+        onClick={() => {
+          setMealName("");
+          setView("select");
+        }}
+        className="w-full max-w-xs bg-green-600 hover:bg-green-700 text-white font-medium py-4 rounded-2xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2"
+      >
+        <Plus size={20} />
+        บันทึกมื้ออาหาร
+      </button>
+    </div>
+  );
+};
 
 const SelectionScreen = ({
   setView,

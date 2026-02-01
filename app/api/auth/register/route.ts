@@ -6,9 +6,14 @@ export async function POST(req: Request) {
   try {
     const { name, email, password, address } = await req.json();
 
-    if (!email || !password) {
+    if (
+      !email ||
+      typeof email !== "string" ||
+      !password ||
+      typeof password !== "string"
+    ) {
       return NextResponse.json(
-        { message: "Email and Password are required" },
+        { message: "Email and Password are required and must be strings" },
         { status: 400 },
       );
     }
