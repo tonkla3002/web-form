@@ -34,14 +34,22 @@ export default function LoginPage() {
 
     try {
       const result = await authenticate(undefined, formData);
-      if (result) {
+      if (typeof result === "string") {
         setErrorMessage(result);
         setLoading(false);
       } else {
-        // Success, redirect happens in server action or middleware?
-        // Ideally server action redirects.
+        // Redirect usually happens, so this might not be reached if redirect is immediate
+        // unlikely to be reached if redirect works.
       }
-    } catch (e) {
+    } catch (e: any) {
+      // Check if error is a Next.js redirect error (NEXT_REDIRECT)
+      if (
+        e.message === "NEXT_REDIRECT" ||
+        e.digest?.startsWith("NEXT_REDIRECT")
+      ) {
+        // Do nothing, let redirect happen
+        return;
+      }
       setErrorMessage("Something went wrong.");
       setLoading(false);
     }
