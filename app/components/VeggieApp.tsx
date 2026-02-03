@@ -1,640 +1,234 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
-import { handleSignOut } from "@/app/lib/actions";
-import {
-  LogOut,
-  ChevronLeft,
-  Check,
-  Leaf,
-  Sun,
-  TreeDeciduous,
-  Sprout,
-  Bean,
-  History,
-} from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { Check } from "lucide-react";
 
-// --- Database ข้อมูลผัก (Vegetable Data) ---
-// Restoring full data from original
-const VEGETABLE_DATA = [
+// --- Data Configuration (from JS) ---
+const VEGETABLES = [
   {
-    id: 1,
-    name: "คะน้า (Kale)",
+    id: "lettuce",
+    name: "ผักกาดหอม",
     icon: "🥬",
-    vitamins: ["วิตามิน A", "วิตามิน C", "วิตามิน K", "แคลเซียม"],
-    benefits: "บำรุงกระดูกและฟัน, ช่วยเรื่องการแข็งตัวของเลือด",
-    bg: "bg-green-600",
+    nutrients: "ไฟเบอร์, วิตามิน A",
+    benefit: "ช่วยการขับถ่ายและบำรุงสายตา",
   },
   {
-    id: 2,
-    name: "แครอท (Carrot)",
+    id: "cabbage",
+    name: "กะหล่ำปลี",
+    icon: "🥬",
+    nutrients: "วิตามิน C, กลูตามีน",
+    benefit: "เสริมภูมิคุ้มกัน ลดการระคายเคืองกระเพาะ",
+  },
+  {
+    id: "carrot",
+    name: "แคร์รอต",
     icon: "🥕",
-    vitamins: ["เบต้าแคโรทีน", "วิตามิน A", "วิตามิน B6"],
-    benefits: "บำรุงสายตา, ผิวพรรณเปล่งปลั่ง, ชะลอวัย",
-    bg: "bg-orange-500",
+    nutrients: "เบต้าแคโรทีน",
+    benefit: "บำรุงผิวพรรณและดวงตา ชะลอวัย",
   },
   {
-    id: 3,
-    name: "บล็อคโคลี (Broccoli)",
+    id: "broccoli",
+    name: "บล็อคโคลี่",
     icon: "🥦",
-    vitamins: ["วิตามิน C", "วิตามิน K", "โฟเลต", "ไฟเบอร์"],
-    benefits: "กระตุ้นการขับถ่าย, เสริมภูมิคุ้มกัน",
-    bg: "bg-green-500",
+    nutrients: "ซัลโฟราเฟน, แคลเซียม",
+    benefit: "ต้านอนุมูลอิสระ ลดความเสี่ยงมะเร็ง",
   },
   {
-    id: 4,
-    name: "มะเขือเทศ (Tomato)",
+    id: "corn",
+    name: "ข้าวโพด",
+    icon: "🌽",
+    nutrients: "คาร์โบไฮเดรต, วิตามิน B",
+    benefit: "ให้พลังงาน บำรุงระบบประสาท",
+  },
+  {
+    id: "tomato",
+    name: "มะเขือเทศ",
     icon: "🍅",
-    vitamins: ["ไลโคปีน", "วิตามิน C", "วิตามิน A"],
-    benefits: "ผิวพรรณดี, ลดรอยเหี่ยวย่น, บำรุงหัวใจ",
-    bg: "bg-red-500",
+    nutrients: "ไลโคปีน",
+    benefit: "ผิวพรรณสดใส ลดความเสี่ยงมะเร็งต่อมลูกหมาก",
   },
   {
-    id: 5,
-    name: "ถั่วแดง (Red Bean)",
-    icon: "🫘",
-    vitamins: ["โปรตีน", "ธาตุเหล็ก", "วิตามิน B"],
-    benefits: "ให้พลังงาน, บำรุงเลือด, ช่วยระบบประสาท",
-    bg: "bg-red-800",
-  },
-  {
-    id: 6,
-    name: "ถั่วลิสง (Peanut)",
-    icon: "🥜",
-    vitamins: ["ไขมันดี", "วิตามิน E", "แมกนีเซียม"],
-    benefits: "บำรุงสมอง, ให้พลังงานสูง, ลดคอเลสเตอรอล",
-    bg: "bg-amber-600",
-  },
-  {
-    id: 7,
-    name: "ผักสลัด",
-    icon: "🥗",
-    vitamins: ["ไฟเบอร์", "วิตามิน A", "โฟเลต"],
-    benefits: "ช่วยให้นอนหลับง่าย, ขับถ่ายสะดวก, แคลอรี่ต่ำ",
-    bg: "bg-green-400",
-  },
-  {
-    id: 8,
-    name: "ผักบุ้ง (Morning Glory)",
-    icon: "🌿",
-    vitamins: ["วิตามิน A", "วิตามิน C", "ธาตุเหล็ก"],
-    benefits: "บำรุงสายตาให้แจ่มใส, ลดอาการตาแห้ง",
-    bg: "bg-green-700",
-  },
-  {
-    id: 9,
-    name: "ฟักทอง (Pumpkin)",
-    icon: "🎃",
-    vitamins: ["เบต้าแคโรทีน", "วิตามิน A", "คอลลาเจน"],
-    benefits: "บำรุงผิวพรรณ, เสริมสร้างระบบภูมิคุ้มกัน",
-    bg: "bg-yellow-500",
-  },
-  {
-    id: 10,
-    name: "กะหล่ำปลี (Cabbage)",
-    icon: "🥬",
-    vitamins: ["วิตามิน C", "กลูตามีน"],
-    benefits: "รักษาแผลในกระเพาะอาหาร, ช่วยย่อยอาหาร",
-    bg: "bg-green-300",
-  },
-  {
-    id: 11,
-    name: "แตงกวา (Cucumber)",
-    icon: "🥒",
-    vitamins: ["น้ำ", "วิตามิน K", "โพแทสเซียม"],
-    benefits: "เพิ่มความชุ่มชื้น, ขับปัสสาวะ, ลดความร้อน",
-    bg: "bg-emerald-400",
-  },
-  {
-    id: 12,
-    name: "ข้าวโพด (Corn)",
-    icon: "🌽",
-    vitamins: ["คาร์โบไฮเดรต", "วิตามิน B1", "ลูทีน"],
-    benefits: "ให้พลังงาน, บำรุงสายตา (จอประสาทตา)",
-    bg: "bg-yellow-400",
-  },
-  {
-    id: 13,
-    name: "ตำลึง (Ivy Gourd)",
-    icon: "🌿",
-    vitamins: ["วิตามิน A", "แคลเซียม", "ฟอสฟอรัส"],
-    benefits: "ดับพิษร้อน, บำรุงสายตา, แก้แพ้",
-    bg: "bg-green-500",
-  },
-  {
-    id: 14,
-    name: "ใบโหระพา (Sweet Basil)",
-    icon: "🍃",
-    vitamins: ["เบต้าแคโรทีน", "แคลเซียม"],
-    benefits: "แก้ท้องอืด, ช่วยย่อยอาหาร, ขับลม",
-    bg: "bg-green-700",
-  },
-  {
-    id: 15,
-    name: "ใบกะเพรา (Holy Basil)",
-    icon: "🌿",
-    vitamins: ["วิตามิน C", "ฟอสฟอรัส", "แคลเซียม"],
-    benefits: "ขับลม, แก้ปวดท้อง, บำรุงธาตุไฟ",
-    bg: "bg-emerald-800",
-  },
-  {
-    id: 16,
-    name: "ผักชี (Coriander)",
-    icon: "☘️",
-    vitamins: ["วิตามิน A", "วิตามิน C"],
-    benefits: "ขับลม, บำรุงสายตา, แก้วิงเวียน",
-    bg: "bg-green-400",
-  },
-  {
-    id: 17,
-    name: "ต้นหอม (Spring Onion)",
-    icon: "🥬",
-    vitamins: ["วิตามิน C", "แคลเซียม", "ฟอสฟอรัส"],
-    benefits: "ป้องกันหวัด, ลดคอเลสเตอรอล",
-    bg: "bg-green-500",
-  },
-  {
-    id: 18,
-    name: "หอมหัวใหญ่ (Onion)",
-    icon: "🧅",
-    vitamins: ["วิตามิน C", "เคอร์ซีติน"],
-    benefits: "ช่วยให้หลับง่าย, บำรุงหัวใจ",
-    bg: "bg-orange-200",
-  },
-  {
-    id: 19,
-    name: "กระเทียม (Garlic)",
-    icon: "🧄",
-    vitamins: ["อัลลิซิน", "ซีลีเนียม", "กำมะถัน"],
-    benefits: "ลดไขมันในเลือด, เสริมภูมิต้านทาน",
-    bg: "bg-amber-100",
-  },
-  {
-    id: 20,
-    name: "มันฝรั่ง (Potato)",
-    icon: "🥔",
-    vitamins: ["คาร์โบไฮเดรต", "วิตามิน B6"],
-    benefits: "ให้พลังงาน, บำรุงสมองและประสาท",
-    bg: "bg-yellow-600",
-  },
-  {
-    id: 21,
-    name: "มะเขือยาว (Long Eggplant)",
+    id: "eggplant",
+    name: "มะเขือม่วง",
     icon: "🍆",
-    vitamins: ["วิตามิน C", "ไฟเบอร์"],
-    benefits: "ลดคอเลสเตอรอล, ช่วยระบบขับถ่าย",
-    bg: "bg-purple-500",
+    nutrients: "นาซูนิน",
+    benefit: "บำรุงสมอง ปกป้องผนังเซลล์",
   },
   {
-    id: 22,
-    name: "มะเขือพวง (Pea Eggplant)",
-    icon: "🟢",
-    vitamins: ["เพกติน", "ธาตุเหล็ก", "ไฟเบอร์"],
-    benefits: "ดูดซับไขมัน, บำรุงเลือด, แก้ไอ",
-    bg: "bg-green-600",
-  },
-  {
-    id: 23,
-    name: "พริกขี้หนู (Bird's Eye Chili)",
-    icon: "🌶️",
-    vitamins: ["แคปไซซิน", "วิตามิน C"],
-    benefits: "ช่วยเผาผลาญ, เจริญอาหาร, ขับเหงื่อ",
-    bg: "bg-red-600",
-  },
-  {
-    id: 24,
-    name: "พริกชี้ฟ้า (Chili Pepper)",
-    icon: "🌶️",
-    vitamins: ["วิตามิน A", "วิตามิน C"],
-    benefits: "บำรุงสายตา, กระตุ้นเลือดไหลเวียน",
-    bg: "bg-red-500",
-  },
-  {
-    id: 25,
-    name: "ข่า (Galangal)",
-    icon: "🫚",
-    vitamins: ["ฟอสฟอรัส", "แคลเซียม"],
-    benefits: "ขับลม, แก้ท้องอืด, ฆ่าเชื้อรา",
-    bg: "bg-stone-300",
-  },
-  {
-    id: 26,
-    name: "ตะไคร้ (Lemongrass)",
-    icon: "🎋",
-    vitamins: ["วิตามิน A", "แคลเซียม"],
-    benefits: "ขับปัสสาวะ, ลดความดันโลหิต, ผ่อนคลาย",
-    bg: "bg-lime-400",
-  },
-  {
-    id: 27,
-    name: "ใบมะกรูด (Kaffir Lime Leaves)",
-    icon: "🍃",
-    vitamins: ["เบต้าแคโรทีน", "วิตามิน C"],
-    benefits: "แก้ไอ, ฟอกโลหิต, ช่วยให้ผ่อนคลาย",
-    bg: "bg-green-800",
-  },
-  {
-    id: 28,
-    name: "ขิง (Ginger)",
-    icon: "🫚",
-    vitamins: ["จิงเจอรอล", "วิตามิน B"],
-    benefits: "ลดอาการคลื่นไส้, เผาผลาญไขมัน",
-    bg: "bg-amber-300",
-  },
-  {
-    id: 29,
-    name: "ถั่วฝักยาว (Long Bean)",
+    id: "cucumber",
+    name: "แตงกวา",
     icon: "🥒",
-    vitamins: ["วิตามิน A", "วิตามิน C", "แคลเซียม"],
-    benefits: "บำรุงกระดูก, ผิวพรรณชุ่มชื้น",
-    bg: "bg-green-500",
+    nutrients: "น้ำ, ซิลิก้า",
+    benefit: "เพิ่มความชุ่มชื้น ขับปัสสาวะ",
   },
   {
-    id: 30,
-    name: "ถั่วงอก (Bean Sprouts)",
-    icon: "🌱",
-    vitamins: ["วิตามิน C", "เลซิทิน", "วิตามิน B12"],
-    benefits: "ช่วยย่อย, บำรุงประสาทและสมอง",
-    bg: "bg-slate-100",
-  },
-  {
-    id: 31,
-    name: "ผักกาดขาว (Chinese Cabbage)",
-    icon: "🥬",
-    vitamins: ["โฟเลต", "แคลเซียม", "วิตามิน C"],
-    benefits: "ย่อยง่าย, แก้ร้อนใน, ขับปัสสาวะ",
-    bg: "bg-green-100",
-  },
-  {
-    id: 32,
-    name: "ข้าวโพดอ่อน (Baby Corn)",
-    icon: "🌽",
-    vitamins: ["วิตามิน B", "เบต้าแคโรทีน"],
-    benefits: "บำรุงหัวใจ, ย่อยง่าย",
-    bg: "bg-yellow-200",
+    id: "pepper",
+    name: "พริกหยวก",
+    icon: "🫑",
+    nutrients: "วิตามิน C สูง",
+    benefit: "ป้องกันหวัด กระตุ้นการไหลเวียนเลือด",
   },
 ];
 
-const calculatePlantStats = (history: any[]) => {
-  if (!history || history.length === 0)
-    return { daysCompleted: 0, todayMeals: 0 };
+const LEVELS = [
+  {
+    name: "เมล็ดปริศนา",
+    icon: "🫘",
+    req: 0,
+    text: "เมล็ดต้องการน้ำและอาหาร...",
+  },
+  {
+    name: "ต้นอ่อนแข็งแรง",
+    icon: "🌱",
+    req: 1,
+    text: "ต้นอ่อนกำลังต้องการสารอาหารเพื่อยืดตัว!",
+  },
+  {
+    name: "ต้นไม้เจริญวัย",
+    icon: "🪴",
+    req: 2,
+    text: "ใกล้จะโตเต็มที่แล้ว! ขออีกมื้อนะ",
+  },
+  { name: "ต้นไม้สมบูรณ์", icon: "🌳", req: 3, text: "โตเต็มวัยสวยงาม!" },
+];
 
-  // TEST MODE: Use TOTAL MEALS directly as the score (daysCompleted)
-  const totalLogs = history.length;
+const DIALOGUE_LINES = [
+  "สวัสดี",
+  "ฉันชื่อ แคร์รอตตี้ 🥕",
+  "นี่ฉันให้เมล็ดพืชปริศนากับเธอ...",
+  "เธอต้องดูแลมันจนกว่ามันจะโตเต็มที่",
+  "เธอต้องให้น้ำและอาหารกับมัน",
+  "โดยการกินเมนู Plant-based! 🥗",
+  "จากนั้นบันทึกผักที่เธอกินเข้าไป",
+  "เพื่อแปรรูปเป็นปุ๋ยให้ต้นไม้ ✨",
+  "ขอให้เธอโชคดี!",
+];
 
-  const todayDate = new Date().toLocaleDateString("th-TH", {
-    day: "numeric",
-    month: "short",
-  });
-  const todayMeals = history.filter((log) =>
-    log.date.startsWith(todayDate),
-  ).length;
-
-  return { daysCompleted: totalLogs, todayMeals: totalLogs }; // Using totalLogs for growth
-};
-
-// --- Plant Pot Component with New Animations ---
-const PlantPot = ({
-  daysCompleted,
-  todayMeals,
-  history,
-}: {
-  daysCompleted: number;
-  todayMeals: number;
-  history: any[];
-}) => {
-  let plantIcon = "🫘"; // Default: Bean
-  let stageName = "เมล็ดปริศนา";
-  let description = "เมล็ดต้องการน้ำและอาหาร...";
-  let isFullGrown = false;
-
-  // Match HTML Stages: 0, 1, 2, 3+
-  if (daysCompleted >= 3) {
-    plantIcon = "🌳";
-    stageName = "ต้นไม้สมบูรณ์";
-    description = "โตเต็มวัยสวยงาม! (TEST MODE)";
-    isFullGrown = true;
-  } else if (daysCompleted === 2) {
-    plantIcon = "🪴";
-    stageName = "ต้นไม้เจริญวัย";
-    description = "ใกล้จะโตเต็มที่แล้ว! (TEST MODE)";
-  } else if (daysCompleted === 1) {
-    plantIcon = "🌱";
-    stageName = "ต้นอ่อนแข็งแรง";
-    description = "ต้นอ่อนกำลังต้องการสารอาหารเพื่อยืดตัว! (TEST MODE)";
-  }
-
-  // Animation logic
-  const isBounce = todayMeals > 0;
-
-  // Calculate stats for full grown tree
-  const allVeggies = history.flatMap((log) => log.veggies || []);
-
-  // 1. Get Top 3 Eaten
-  const veggieCounts: Record<string, number> = {};
-  allVeggies.forEach((v: any) => {
-    veggieCounts[v.name] = (veggieCounts[v.name] || 0) + 1;
-  });
-  const sortedVeggies = Object.entries(veggieCounts)
-    .sort(([, a], [, b]) => b - a)
-    .slice(0, 3);
-
-  // 2. Circular Arrangement Logic
-  const treeVisuals = useMemo(() => {
-    if (!isFullGrown) return { fruits: [], sparkles: [] };
-
-    // Fruits (Inner Circle)
-    const uniqueIcons = [...allVeggies].reverse().slice(0, 8); // Latest 8 veggies
-    const fruitRadius = 50;
-    const fruits = uniqueIcons.map((v: any, i) => {
-      const angle = (i / uniqueIcons.length) * Math.PI * 2 - Math.PI / 2;
-      return {
-        ...v,
-        x: Math.cos(angle) * fruitRadius,
-        y: Math.sin(angle) * fruitRadius,
-        delay: Math.random() * 2,
-      };
-    });
-
-    // Sparkles (Outer Circle)
-    const sparkleCount = 8;
-    const sparkleRadius = 80;
-    const sparkles = Array.from({ length: sparkleCount }).map((_, i) => {
-      const angle =
-        (i / sparkleCount) * Math.PI * 2 - Math.PI / 2 + Math.PI / sparkleCount;
-      return {
-        id: i,
-        x: Math.cos(angle) * sparkleRadius,
-        y: Math.sin(angle) * sparkleRadius,
-        delay: Math.random() * 1.5,
-      };
-    });
-
-    return { fruits, sparkles };
-  }, [allVeggies.length, isFullGrown]);
-
-  return (
-    <div className="flex flex-col items-center mb-8 w-full">
-      <div className="h-48 flex items-center justify-center mb-4 plant-container relative w-full">
-        {/* Main Tree Container centered */}
-        <div
-          className={`filter drop-shadow-xl select-none transition-all duration-500 relative flex items-center justify-center ${
-            isBounce && !isFullGrown ? "bounce-anim" : ""
-          }`}
-        >
-          {/* Main Plant EMOJI */}
-          <div className="text-9xl filter drop-shadow-lg leading-none">
-            {plantIcon}
-          </div>
-
-          {/* Full Grown Decorations */}
-          {isFullGrown && (
-            <>
-              {/* Inner Circle: Fruits */}
-              {treeVisuals.fruits.map((fruit: any, i: number) => (
-                <div
-                  key={`fruit-${i}`}
-                  className="absolute z-20 flex items-center justify-center w-0 h-0"
-                  style={{
-                    transform: `translate(${fruit.x}px, ${fruit.y}px)`,
-                  }}
-                >
-                  <div
-                    className="text-2xl animate-bounce drop-shadow-md"
-                    style={{
-                      animationDuration: "3s",
-                      animationDelay: `${fruit.delay}s`,
-                    }}
-                    title={fruit.name}
-                  >
-                    {fruit.icon}
-                  </div>
-                </div>
-              ))}
-
-              {/* Outer Circle: Sparkles */}
-              {treeVisuals.sparkles.map((sparkle: any) => (
-                <div
-                  key={`sparkle-${sparkle.id}`}
-                  className="absolute z-0 flex items-center justify-center w-0 h-0"
-                  style={{
-                    transform: `translate(${sparkle.x}px, ${sparkle.y}px)`,
-                  }}
-                >
-                  <div
-                    className="text-2xl text-yellow-300 sparkle"
-                    style={{ animationDelay: `${sparkle.delay}s` }}
-                  >
-                    ✨
-                  </div>
-                </div>
-              ))}
-            </>
-          )}
-        </div>
-
-        <div className="absolute bottom-0 bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full text-sm font-bold shadow-md transform translate-y-2 z-30">
-          ระดับ: {stageName}
-        </div>
-      </div>
-
-      <div className="text-center bg-white/50 backdrop-blur-sm p-4 rounded-xl border border-green-100 shadow-sm max-w-sm mb-4 w-full">
-        <p className="text-gray-600 text-sm whitespace-pre-line font-medium mb-2">
-          {description}
-        </p>
-
-        {/* Ranking Section */}
-        {isFullGrown && sortedVeggies.length > 0 && (
-          <div className="mt-3 pt-3 border-t border-green-200">
-            <p className="text-xs font-bold text-green-800 mb-2 uppercase tracking-wide">
-              🏆 ผักที่คุณกินบ่อยที่สุด
-            </p>
-            <div className="flex justify-center gap-3">
-              {sortedVeggies.map(([name, count], idx) => {
-                const v = allVeggies.find((av: any) => av.name === name);
-                return (
-                  <div key={name} className="flex flex-col items-center">
-                    <span className="text-xl filter drop-shadow-sm mb-1">
-                      {v?.icon || "🥗"}
-                    </span>
-                    <span className="text-[10px] text-gray-600 font-medium leading-none">
-                      {name.split(" ")[0]}
-                    </span>
-                    <span className="text-[9px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full mt-1 font-bold">
-                      x{count}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {!isFullGrown && (
-          <p className="text-xs text-green-600 mt-2 font-bold">
-            (เติบโตมาแล้ว {daysCompleted} มื้อ)
-          </p>
-        )}
-      </div>
-
-      {/* Progress Circles for Today */}
-      {!isFullGrown && (
-        <div className="flex items-center gap-2 justify-center mt-2 bg-white/60 px-4 py-2 rounded-full shadow-sm">
-          <span className="text-xs font-bold text-gray-500 mr-1">
-            ระดับพลัง:
-          </span>
-          {[...Array(Math.min(todayMeals + 1, 5))].map((_, i) => (
-            <div
-              key={i}
-              className={`w-3 h-3 rounded-full transition-all duration-300 ${todayMeals > i ? "bg-green-500 scale-110" : "bg-gray-200"}`}
-            />
-          ))}
-        </div>
-      )}
-    </div>
+export default function VeggieApp() {
+  // --- View State ---
+  const [view, setView] = useState<"intro" | "dialogue" | "game" | "summary">(
+    "intro",
   );
-};
+  const [showReadyModal, setShowReadyModal] = useState(false);
+  const [showAnalysisModal, setShowAnalysisModal] = useState(false);
 
-export default function VeggieApp({ user }: { user: any }) {
-  // State
-  const [view, setView] = useState<
-    "intro" | "dialogue" | "home" | "select" | "summary" | "history"
-  >("intro");
-  const [history, setHistory] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  // --- Game State ---
+  const [currentLevel, setCurrentLevel] = useState(0);
+  const [totalLogs, setTotalLogs] = useState<typeof VEGETABLES>([]); // Stores all selected veggies history
 
-  // Dialogue State
+  // --- Dialogue State ---
   const [dialogueIndex, setDialogueIndex] = useState(0);
-  const dialogueLines = [
-    "สวัสดี",
-    "ฉันชื่อ แคร์รอตตี้ 🥕",
-    "นี่ฉันให้เมล็ดพืชปริศนากับเธอ...",
-    "เธอต้องดูแลมันจนกว่ามันจะโตเต็มที่",
-    "เธอต้องให้น้ำและอาหารกับมัน",
-    "โดยการกินเมนู Plant-based! 🥗",
-    "จากนั้นบันทึกผักที่เธอกินเข้าไป",
-    "เพื่อแปรรูปเป็นปุ๋ยให้ต้นไม้ ✨",
-    "ขอให้เธอโชคดี!",
-  ];
 
-  // Form State
-  const [mealName, setMealName] = useState("");
-  const [selectedIds, setSelectedIds] = useState<number[]>([]);
-  const [justSavedLog, setJustSavedLog] = useState<any>(null);
+  // --- Selection State ---
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [analysisData, setAnalysisData] = useState<{
+    nutrients: string[];
+    benefits: string[];
+    veggies: typeof VEGETABLES;
+  } | null>(null);
 
-  // Fetch History
+  // Init check
   useEffect(() => {
-    fetchLogs();
+    // Reset or load state if we wanted persistence, but user said "no database" so local state is fine.
+    // Maybe we keep localStorage for "has seen intro" if we want, but let's stick to the script logic.
+    // The script logic is purely session-based.
   }, []);
 
-  const fetchLogs = async () => {
-    try {
-      const res = await fetch("/api/logs");
-      if (res.ok) {
-        const data = await res.json();
-        setHistory(data);
-      }
-    } catch (err) {
-      console.error("Failed to fetch logs", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // --- Handlers ---
 
-  const handleStartGame = () => {
-    // Fix: Key by User ID so new accounts see it
-    const storageKey = `veggie_intro_seen_${user?.id}`;
-    const hasSeenIntro = localStorage.getItem(storageKey);
-
-    if (hasSeenIntro) {
-      setView("home");
-    } else {
-      setView("dialogue");
-    }
+  const handleStart = () => {
+    setView("dialogue");
+    setDialogueIndex(0);
   };
 
   const handleNextDialogue = () => {
-    if (dialogueIndex < dialogueLines.length - 1) {
+    if (dialogueIndex < DIALOGUE_LINES.length - 1) {
       setDialogueIndex((prev) => prev + 1);
     } else {
-      // Fix: Save by User ID
-      const storageKey = `veggie_intro_seen_${user?.id}`;
-      localStorage.setItem(storageKey, "true");
-      setView("home");
+      setView("game");
+      setCurrentLevel(0); // Ensure start at 0
     }
   };
 
-  const handleToggleVeggie = (id: number) => {
+  // Toggle Selection
+  const toggleVeggie = (id: string) => {
     setSelectedIds((prev) =>
       prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id],
     );
   };
 
-  const handleSave = async () => {
-    if (selectedIds.length === 0) return;
-    if (!mealName.trim()) {
-      alert("กรุณาใส่ชื่อเมนูด้วยนะครับ");
+  // Analyze (Click Record Meal)
+  const handleAnalyze = () => {
+    if (selectedIds.length === 0) {
+      alert("กรุณาเลือกผักอย่างน้อย 1 อย่างครับ");
       return;
     }
 
-    const selectedVeggies = VEGETABLE_DATA.filter((v) =>
+    const selectedVeggies = VEGETABLES.filter((v) =>
       selectedIds.includes(v.id),
     );
-    // Extract vitamins
-    const allVitamins = new Set<string>();
+
+    // Calculate Analysis
+    const nutrients = new Set<string>();
+    const benefits = new Set<string>();
+
     selectedVeggies.forEach((v) => {
-      v.vitamins.forEach((vit) => allVitamins.add(vit));
+      v.nutrients.split(", ").forEach((n) => nutrients.add(n));
+      benefits.add(v.benefit);
     });
 
-    const body = {
-      date: new Date().toLocaleDateString("th-TH", {
-        day: "numeric",
-        month: "short",
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-      mealName,
+    setAnalysisData({
       veggies: selectedVeggies,
-      vitamins: Array.from(allVitamins),
-    };
+      nutrients: Array.from(nutrients),
+      benefits: Array.from(benefits),
+    });
 
-    try {
-      const res = await fetch("/api/logs", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
+    setShowAnalysisModal(true);
+  };
 
-      if (res.ok) {
-        const data = await res.json();
-        setJustSavedLog({
-          ...data.log,
-          analysis: {
-            veggies: selectedVeggies,
-            vitamins: Array.from(allVitamins),
-          },
-        });
-        await fetchLogs(); // Refresh
-        setMealName("");
-        setSelectedIds([]);
-        setView("summary"); // Show success
+  // Confirm Growth (After Analysis)
+  const handleConfirmGrowth = () => {
+    if (!analysisData) return;
+
+    // Add to logs
+    setTotalLogs((prev) => [...prev, ...analysisData.veggies]);
+
+    // Clear selection
+    setSelectedIds([]);
+    setShowAnalysisModal(false);
+
+    // Level Logic
+    if (currentLevel < LEVELS.length - 1) {
+      const nextLevel = currentLevel + 1;
+      setCurrentLevel(nextLevel);
+
+      // If max level reached
+      if (nextLevel === LEVELS.length - 1) {
+        setTimeout(() => {
+          setShowReadyModal(true);
+        }, 1000);
       }
-    } catch (err) {
-      console.error("Error saving", err);
-      alert("เกิดข้อผิดพลาดในการบันทึก");
     }
   };
 
-  const { daysCompleted, todayMeals } = useMemo(
-    () => calculatePlantStats(history),
-    [history],
-  );
+  // Trigger Summary (From Ready Modal)
+  const handleTriggerSummary = () => {
+    setShowReadyModal(false);
+    setView("summary");
+  };
 
-  // --- Views ---
+  // Reset Game
+  const handleReset = () => {
+    setCurrentLevel(0);
+    setTotalLogs([]);
+    setView("intro");
+  };
+
+  // --- Sub-Components / Render Helpers ---
 
   const renderIntro = () => (
     <div className="absolute inset-0 bg-gradient-to-br from-green-50 to-green-100 flex flex-col items-center justify-center p-8 z-20 text-center overflow-hidden">
-      {/* Decorative Background Elements */}
+      {/* Background Elements */}
       <div className="absolute inset-0 pointer-events-none select-none overflow-hidden">
         <div
           className="absolute top-10 left-[-20px] text-7xl opacity-30 float-anim blur-[3px]"
@@ -660,7 +254,6 @@ export default function VeggieApp({ user }: { user: any }) {
         >
           🍆
         </div>
-
         <div
           className="absolute top-1/3 left-[-30px] text-5xl opacity-20 rotate-12 float-anim blur-[2px]"
           style={{ animationDelay: "1.0s" }}
@@ -673,7 +266,6 @@ export default function VeggieApp({ user }: { user: any }) {
         >
           🌽
         </div>
-
         <div
           className="absolute top-20 left-20 text-3xl sparkle text-yellow-400 opacity-60"
           style={{ animationDelay: "0.1s" }}
@@ -715,7 +307,7 @@ export default function VeggieApp({ user }: { user: any }) {
         </div>
 
         <button
-          onClick={handleStartGame}
+          onClick={handleStart}
           className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-full shadow-lg transform transition hover:scale-105 flex items-center justify-center gap-3 text-lg"
         >
           <span>🎮</span> เริ่มปลูกต้นไม้
@@ -727,29 +319,23 @@ export default function VeggieApp({ user }: { user: any }) {
   const renderDialogue = () => (
     <div className="absolute inset-0 bg-white z-20 flex flex-col items-center justify-center">
       <div className="absolute inset-0 bg-green-50 opacity-50 z-0"></div>
-
       <div className="relative z-10 flex flex-col items-center w-full max-w-sm px-6">
-        {/* Speech Bubble */}
         <div
           onClick={handleNextDialogue}
           className="relative bg-white border-4 border-green-200 rounded-[2rem] p-6 shadow-xl mb-6 w-full cursor-pointer transform transition hover:scale-105 active:scale-95"
         >
           <p className="text-xl text-green-800 font-medium leading-relaxed text-center min-h-[3rem] flex items-center justify-center">
-            {dialogueLines[dialogueIndex]}
+            {DIALOGUE_LINES[dialogueIndex]}
             <span className="cursor-blink ml-1">|</span>
           </p>
-
           <div className="text-center mt-2">
             <span className="text-xs text-green-400 font-bold animate-pulse">
               แตะเพื่อไปต่อ ▶
             </span>
           </div>
-
           <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-[20px] border-l-transparent border-r-[20px] border-r-transparent border-t-[24px] border-t-green-200"></div>
           <div className="absolute -bottom-[20px] left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-[16px] border-l-transparent border-r-[16px] border-r-transparent border-t-[20px] border-t-white"></div>
         </div>
-
-        {/* Mascot */}
         <div className="relative float-anim mt-2">
           <img
             src="https://i.postimg.cc/vBsxg7nG/Plant-based.png"
@@ -764,279 +350,296 @@ export default function VeggieApp({ user }: { user: any }) {
     </div>
   );
 
-  const renderHome = () => (
-    <div className="flex flex-col items-center justify-center p-6 h-full relative overflow-y-auto">
-      {/* Branding Top Right */}
-      <div
-        id="top-branding"
-        className="absolute top-4 right-4 z-20 flex items-center gap-2 p-1.5 bg-white/90 backdrop-blur-sm rounded-xl shadow-sm border border-green-100 max-w-[200px]"
-      >
-        <div className="flex flex-col items-end leading-tight">
-          <span className="text-[10px] font-bold text-green-800 uppercase">
-            Veggie Grow
-          </span>
-          <span className="text-[8px] text-green-600">
-            สวัสดี, {user?.name || "นักปลูกผัก"}
-          </span>
-        </div>
-        <img
-          src="https://i.postimg.cc/pXVN3PVk/Untitled-Artwork.png"
-          alt="Logo"
-          className="w-8 h-8 rounded-full border border-green-200"
-        />
-      </div>
+  const renderGame = () => {
+    const levelData = LEVELS[currentLevel];
+    const progress = (currentLevel / (LEVELS.length - 1)) * 100;
+    const isGrowAnim = true; // Use key or logic to trigger animation? React handles diffs.
 
-      {/* Logout (Top Left) */}
-      <div className="absolute top-4 left-4 z-20 flex gap-2">
-        <form action={handleSignOut}>
-          <button className="p-2 bg-white/80 backdrop-blur-sm rounded-full text-gray-400 hover:text-red-500 shadow-sm border border-green-50 transition-colors">
-            <LogOut size={18} />
-          </button>
-        </form>
-        {/* Undo/Reset Intro for Testing */}
-        <button
-          onClick={() => {
-            const storageKey = `veggie_intro_seen_${user?.id}`;
-            localStorage.removeItem(storageKey);
-            setView("intro");
-          }}
-          className="p-2 bg-white/80 backdrop-blur-sm rounded-full text-gray-400 hover:text-blue-500 shadow-sm border border-green-50 transition-colors"
-          title="เล่น Intro ใหม่"
-        >
-          <History size={18} />
-        </button>
-      </div>
-
-      {/* Floating Background Elements */}
-      <div className="absolute inset-0 pointer-events-none select-none overflow-hidden z-0">
-        <div className="absolute top-20 left-10 text-4xl opacity-20 float-anim">
-          🥦
-        </div>
-        <div
-          className="absolute bottom-32 right-10 text-4xl opacity-20 float-anim"
-          style={{ animationDelay: "1s" }}
-        >
-          🥕
-        </div>
-        <div className="absolute top-1/2 left-1/4 text-2xl sparkle text-yellow-300 opacity-50">
-          ✨
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="relative z-10 w-full flex flex-col items-center mt-10">
-        <h1 className="text-3xl font-bold text-green-800 mb-1 drop-shadow-sm">
-          พร้อมปลูกมื้อนี้?
-        </h1>
-        <p className="text-green-600 mb-8 font-light text-sm">
-          เปลี่ยนผักในจานให้เป็นต้นไม้ที่แข็งแรง
-        </p>
-
-        <PlantPot
-          daysCompleted={daysCompleted}
-          todayMeals={todayMeals}
-          history={history}
-        />
-
-        <button
-          onClick={() => setView("select")}
-          className="w-full max-w-xs bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-2xl shadow-lg transform transition hover:scale-105 flex items-center justify-center gap-3 text-lg"
-        >
-          <span>🎮</span> บันทึกมื้ออาหาร
-        </button>
-
-        {/* History Link */}
-        <button
-          onClick={() => setView("history")}
-          className="mt-4 text-green-600 text-sm font-medium hover:underline flex items-center gap-1 opacity-80"
-        >
-          <History size={14} /> ดูประวัติการปลูก
-        </button>
-      </div>
-
-      {/* Mascot (Hidden in Home now as per new flows, or optional) */}
-    </div>
-  );
-
-  const renderSelect = () => (
-    <div className="h-full flex flex-col bg-[#f0fdf4]">
-      <div className="px-6 py-4 pb-2 z-10 bg-white/50 backdrop-blur-sm sticky top-0">
-        <div className="flex items-center justify-between mb-2">
-          <button
-            onClick={() => setView("home")}
-            className="p-2 -ml-2 text-gray-500 hover:bg-white/50 rounded-full"
-          >
-            <ChevronLeft size={24} />
-          </button>
-          <span className="font-bold text-green-800">เลือกผักในมื้อนี้</span>
-          <div className="w-8"></div>
-        </div>
-        <input
-          type="text"
-          placeholder="ชื่อเมนู (เช่น ผัดผักรวม)"
-          value={mealName}
-          onChange={(e) => setMealName(e.target.value)}
-          className="w-full bg-white border border-green-200 rounded-xl px-4 py-3 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-400 shadow-sm transition-all"
-        />
-      </div>
-
-      <div className="flex-1 overflow-y-auto px-6 pb-24 pt-4">
-        <div className="grid grid-cols-3 gap-3">
-          {VEGETABLE_DATA.map((v) => (
-            <label key={v.id} className="cursor-pointer relative group">
-              <input
-                type="checkbox"
-                className="hidden"
-                checked={selectedIds.includes(v.id)}
-                onChange={() => handleToggleVeggie(v.id)}
-              />
-              <div
-                className={`
-                            border-2 rounded-xl p-2 text-center transition-all h-full flex flex-col items-center justify-center gap-1 aspect-square
-                            ${
-                              selectedIds.includes(v.id)
-                                ? "border-green-500 bg-green-100 transform scale-105 shadow-md"
-                                : "border-white bg-white hover:border-green-200 shadow-sm"
-                            }
-                        `}
-              >
-                <span className="text-3xl filter drop-shadow-sm">{v.icon}</span>
-                <span className="text-[10px] font-bold text-gray-700 leading-tight">
-                  {v.name}
-                </span>
-              </div>
-              {selectedIds.includes(v.id) && (
-                <div className="absolute top-1 right-1 bg-green-500 text-white rounded-full p-0.5 shadow-sm">
-                  <Check size={10} />
-                </div>
-              )}
-            </label>
-          ))}
-        </div>
-      </div>
-
-      <div className="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-[#f0fdf4] via-[#f0fdf4] to-transparent z-20">
-        <button
-          onClick={handleSave}
-          disabled={selectedIds.length === 0}
-          className={`
-                    w-full py-4 rounded-xl font-bold shadow-lg transform transition active:scale-95 flex items-center justify-center gap-2
-                    ${selectedIds.length > 0 ? "bg-green-600 text-white hover:bg-green-700" : "bg-gray-200 text-gray-400 cursor-not-allowed"}
-                `}
-        >
-          <span>📝</span> บันทึกและปลูก ({selectedIds.length})
-        </button>
-      </div>
-    </div>
-  );
-
-  const renderSummary = () => {
-    if (!justSavedLog) return null;
     return (
-      <div className="p-6 h-full flex flex-col items-center justify-center text-center relative overflow-hidden">
-        {/* Background Decoration */}
-        <div className="absolute inset-0 bg-gradient-to-br from-green-300 via-emerald-200 to-green-100 z-0"></div>
-
-        <div className="relative z-10 bg-white/90 backdrop-blur-md p-6 rounded-3xl shadow-2xl w-full max-w-sm border-4 border-green-50 animate-fade-in">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-green-600 shadow-inner">
-            <Sun size={32} />
+      <div className="p-6 flex flex-col items-center flex-grow h-full w-full">
+        {/* Header / Branding */}
+        <div className="absolute top-2 right-2 z-50 flex items-center gap-2 p-1.5 bg-white/90 backdrop-blur-sm rounded-xl shadow-sm border border-green-100 max-w-[220px]">
+          <div className="flex flex-col items-end leading-tight">
+            <span className="text-[10px] font-bold text-green-800 uppercase tracking-wide">
+              Plant-based Made Easy
+            </span>
+            <span className="text-[8px] text-green-600 whitespace-nowrap font-medium">
+              แพลนท์เบสง่ายๆ แค่จานเดิมเพิ่มผัก
+            </span>
           </div>
-          <h2 className="text-2xl font-bold text-green-800 mb-2">สุดยอดมาก!</h2>
-          <p className="text-gray-600 mb-6 text-sm">
-            มื้อ "{justSavedLog.mealName}" ได้ถูกเปลี่ยนเป็นปุ๋ยแล้ว
-          </p>
+          <img
+            src="https://i.postimg.cc/pXVN3PVk/Untitled-Artwork.png"
+            alt="Logo"
+            className="w-8 h-8 rounded-full border border-green-200 shadow-sm"
+          />
+        </div>
 
-          <div className="bg-green-50 rounded-xl p-4 text-left border border-green-100 mb-6">
-            <h3 className="font-bold text-green-700 mb-2 text-xs uppercase tracking-wider">
-              สารอาหารที่ได้รับ
-            </h3>
-            <div className="flex flex-wrap gap-2">
-              {justSavedLog.analysis.vitamins.map((v: string, i: number) => (
-                <span
-                  key={i}
-                  className="bg-white text-green-600 px-2 py-1 rounded-md text-xs font-bold border border-green-200 shadow-sm"
+        <div className="w-full bg-green-600 p-4 text-center rounded-xl mb-4 mt-8">
+          <h1 className="text-2xl font-bold text-white">
+            Plant your meals! 🌱
+          </h1>
+        </div>
+
+        {/* Level Progress */}
+        <div className="w-full bg-gray-200 rounded-full h-2.5 mb-6">
+          <div
+            className="bg-green-600 h-2.5 rounded-full transition-all duration-500"
+            style={{ width: `${progress}%` }}
+          ></div>
+        </div>
+
+        {/* Plant Display */}
+        <div className="h-48 flex items-center justify-center mb-4 plant-container relative w-full">
+          <div className="text-9xl bounce-anim filter drop-shadow-lg select-none">
+            {levelData.icon}
+          </div>
+          <div className="absolute bottom-0 bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full text-sm font-bold shadow-md">
+            ระดับ: {levelData.name}
+          </div>
+        </div>
+
+        {/* Instruction Text */}
+        <div className="text-center mb-6">
+          <p className="text-gray-600">{levelData.text}</p>
+        </div>
+
+        {/* Selection Area */}
+        <div className="w-full flex-1 overflow-y-auto pb-20">
+          <div className="grid grid-cols-3 gap-3 mb-6">
+            {VEGETABLES.map((v) => (
+              <label key={v.id} className="cursor-pointer relative group">
+                <input
+                  type="checkbox"
+                  className="hidden"
+                  checked={selectedIds.includes(v.id)}
+                  onChange={() => toggleVeggie(v.id)}
+                />
+                <div
+                  className={`border-2 rounded-xl p-2 text-center transition-all h-full flex flex-col items-center justify-center ${selectedIds.includes(v.id) ? "border-green-500 bg-green-100 transform scale-105" : "border-green-100 hover:bg-green-50"}`}
                 >
-                  {v}
-                </span>
-              ))}
-            </div>
+                  <span className="text-3xl mb-1">{v.icon}</span>
+                  <span className="text-xs font-medium text-gray-700 leading-tight">
+                    {v.name}
+                  </span>
+                </div>
+              </label>
+            ))}
           </div>
+        </div>
 
+        <div className="absolute bottom-0 left-0 w-full p-6 bg-white border-t border-green-100">
           <button
-            onClick={() => setView("home")}
-            className="w-full bg-green-600 text-white font-bold py-3 rounded-xl shadow-lg hover:bg-green-700 transition"
+            onClick={handleAnalyze}
+            className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg transform transition active:scale-95 flex items-center justify-center gap-2"
           >
-            กลับไปดูต้นไม้โต 🌳
+            <span>📝</span> บันทึกมื้ออาหาร
           </button>
-        </div>
-
-        {/* Sparkles */}
-        <div className="absolute top-1/4 left-10 text-2xl sparkle text-white opacity-80">
-          ✨
-        </div>
-        <div
-          className="absolute bottom-1/4 right-10 text-3xl sparkle text-white opacity-80"
-          style={{ animationDelay: "0.5s" }}
-        >
-          ✨
         </div>
       </div>
     );
   };
 
-  const renderHistory = () => (
-    <div className="h-full flex flex-col bg-[#f0fdf4]">
-      <div className="px-6 py-4 bg-white/50 backdrop-blur-sm flex items-center gap-2 sticky top-0 z-10 shadow-sm">
-        <button
-          onClick={() => setView("home")}
-          className="p-2 -ml-2 text-gray-500 hover:bg-white rounded-full"
-        >
-          <ChevronLeft size={24} />
-        </button>
-        <h2 className="font-bold text-green-800 text-lg">ประวัติการกินผัก</h2>
-      </div>
-      <div className="flex-1 overflow-y-auto p-4 space-y-3">
-        {history.length === 0 ? (
-          <div className="text-center text-gray-400 mt-20">
-            ยังไม่มีบันทึกครับ
+  const renderSummary = () => {
+    const uniqueIcons = [...new Set(totalLogs.map((v) => v.name))];
+    const allBenefits = Array.from(new Set(totalLogs.map((v) => v.benefit)));
+
+    // Tree visuals
+    const displayFruits = [...totalLogs]
+      .sort(() => 0.5 - Math.random())
+      .slice(0, 8);
+    const radius = 50;
+
+    return (
+      <div className="social-card p-8 text-center h-full flex flex-col items-center justify-center pt-16 relative overflow-hidden">
+        {/* Sparkles BG */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-10 left-10 text-xl sparkle text-white">
+            ✨
           </div>
-        ) : (
-          history.map((log) => (
-            <div
-              key={log.id}
-              className="bg-white p-4 rounded-xl shadow-sm border border-green-50 flex flex-col gap-2"
-            >
-              <div className="flex justify-between items-center border-b border-gray-50 pb-2">
-                <span className="font-bold text-gray-700">{log.mealName}</span>
-                <span className="text-xs text-gray-400">{log.date}</span>
-              </div>
-              <div className="flex flex-wrap gap-1">
-                {log.veggies && log.veggies.length > 0 ? (
-                  log.veggies.map((v: any, i: number) => (
-                    <span key={i} className="text-xl" title={v.name}>
-                      {v.icon}
-                    </span>
-                  ))
-                ) : (
-                  <span className="text-xs text-gray-400">ไม่พบข้อมูลผัก</span>
-                )}
-              </div>
+          <div
+            className="absolute bottom-20 right-10 text-2xl sparkle text-white"
+            style={{ animationDelay: "1s" }}
+          >
+            ✨
+          </div>
+        </div>
+
+        <div className="bg-white/90 backdrop-blur-sm p-6 rounded-2xl shadow-xl w-full flex flex-col items-center z-10">
+          {/* Final Tree */}
+          <div className="relative w-48 h-48 flex items-center justify-center mb-6 mt-2">
+            <div className="text-9xl relative z-10 filter drop-shadow-xl">
+              🌳
             </div>
-          ))
-        )}
+
+            {/* Fruits */}
+            {displayFruits.map((v, i) => {
+              const angle =
+                (i / displayFruits.length) * Math.PI * 2 - Math.PI / 2;
+              const x = Math.cos(angle) * radius;
+              const y = Math.sin(angle) * radius;
+              return (
+                <div
+                  key={i}
+                  className="absolute z-20 flex items-center justify-center w-0 h-0"
+                  style={{ transform: `translate(${x}px, ${y}px)` }}
+                >
+                  <div
+                    className="text-2xl animate-bounce drop-shadow-md"
+                    style={{
+                      animationDuration: "3s",
+                      animationDelay: `${Math.random()}s`,
+                    }}
+                  >
+                    {v.icon}
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Sparkles Ring */}
+            {[...Array(8)].map((_, i) => {
+              const sRadius = 80;
+              const angle = (i / 8) * Math.PI * 2 - Math.PI / 2 + Math.PI / 8;
+              const x = Math.cos(angle) * sRadius;
+              const y = Math.sin(angle) * sRadius;
+              return (
+                <div
+                  key={i}
+                  className="absolute z-0 flex items-center justify-center w-0 h-0"
+                  style={{ transform: `translate(${x}px, ${y}px)` }}
+                >
+                  <div
+                    className="text-2xl text-yellow-300 sparkle"
+                    style={{ animationDelay: `${Math.random() * 1.5}s` }}
+                  >
+                    ✨
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <h2 className="text-2xl font-bold text-green-800 mb-2">
+            สุดยอดนักกินผัก!
+          </h2>
+          <p className="text-green-700 mb-4">ต้นไม้ของคุณเติบโตสมบูรณ์แล้ว!</p>
+
+          <div className="border-t border-b border-green-200 py-4 my-4 text-left w-full">
+            <h3 className="font-bold text-gray-700 mb-2 text-sm">
+              สรุปสิ่งที่ที่ได้รับ:
+            </h3>
+            <ul className="text-sm text-gray-600 space-y-1">
+              <li className="flex items-start gap-2">
+                <span className="text-green-500">✅</span>{" "}
+                <span>
+                  กินผักไปทั้งหมด <b>{totalLogs.length}</b> รายการ
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-green-500">🥗</span>{" "}
+                <span>ความหลากหลาย: {uniqueIcons.join(", ")}</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-green-500">💪</span>{" "}
+                <span>
+                  <b>ลดความเสี่ยง:</b> {allBenefits.slice(0, 3).join(", ")}{" "}
+                  และอื่นๆ
+                </span>
+              </li>
+            </ul>
+          </div>
+
+          <div className="bg-green-100 rounded-lg p-3 text-xs text-green-800 font-medium w-full text-center leading-relaxed">
+            การกินผักหลากหลายช่วยลดความเสี่ยงของการเกิดโรค
+            <br />
+            แถมยังเสริมสร้างภูมิคุ้มกันให้แข็งแรงอีกด้วย
+            <br />
+            <span className="font-bold text-green-700 mt-2 block">
+              #แพลนท์เบสง่ายๆแค่จานเดิมเพิ่มผัก
+            </span>
+            <span className="font-bold text-green-700">
+              #PlantBasedMadeEasy
+            </span>
+          </div>
+        </div>
+
+        <p className="mt-6 text-green-900 font-medium opacity-75 text-sm z-10">
+          แคปหน้าจอนี้เพื่อชวนเพื่อนมาปลูกต้นไม้ด้วยกัน! 📸
+        </p>
+
+        <button
+          onClick={handleReset}
+          className="mt-4 bg-white text-green-600 font-bold py-2 px-6 rounded-full shadow hover:bg-gray-50 transition z-10"
+        >
+          ปลูกต้นใหม่ 🔄
+        </button>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-green-50 font-['Kanit']">
-      <div className="w-full max-w-md bg-white/40 rounded-3xl shadow-2xl overflow-hidden border-4 border-white/50 min-h-[600px] h-[600px] relative backdrop-blur-xl">
+    <div className="min-h-screen flex items-center justify-center p-4 font-['Kanit'] bg-[#f0fdf4]">
+      <div className="w-full max-w-md bg-white rounded-3xl shadow-xl overflow-hidden border-4 border-green-100 min-h-[600px] flex flex-col relative h-[800px]">
         {view === "intro" && renderIntro()}
         {view === "dialogue" && renderDialogue()}
-        {view === "home" && renderHome()}
-        {view === "select" && renderSelect()}
+        {view === "game" && renderGame()}
         {view === "summary" && renderSummary()}
-        {view === "history" && renderHistory()}
+
+        {/* Analysis Modal */}
+        {showAnalysisModal && analysisData && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4">
+            <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl transform scale-100 transition-transform">
+              <h3 className="text-xl font-bold text-gray-800 mb-3">
+                ✨ สารอาหารที่ได้รับ
+              </h3>
+              <div className="text-gray-600 text-sm mb-4 space-y-2">
+                <div className="mb-2">
+                  <strong className="text-green-600 block">คุณเลือก:</strong>
+                  {analysisData.veggies
+                    .map((v) => v.icon + " " + v.name)
+                    .join(", ")}
+                </div>
+                <div className="bg-green-50 p-3 rounded-lg border border-green-100">
+                  <p className="mb-1">
+                    <strong>💊 สารอาหารที่ได้:</strong>{" "}
+                    {analysisData.nutrients.join(", ")}
+                  </p>
+                  <p>
+                    <strong>🛡️ ประโยชน์:</strong>{" "}
+                    {analysisData.benefits.join(". ")}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={handleConfirmGrowth}
+                className="w-full bg-gradient-to-r from-green-500 to-green-600 text-white font-bold py-3 rounded-xl shadow-md hover:from-green-600 hover:to-green-700"
+              >
+                แปรรูปเป็นปุ๋ยให้ต้นไม้โต! 💧
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Ready Modal */}
+        {showReadyModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 px-4 backdrop-blur-sm">
+            <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center transform scale-100 transition-transform border-4 border-yellow-200">
+              <div className="text-6xl mb-4 animate-bounce">🎁</div>
+              <h3 className="text-2xl font-bold text-green-800 mb-2">
+                ต้นไม้โตเต็มที่แล้ว!
+              </h3>
+              <p className="text-gray-600 mb-6">
+                พร้อมที่จะดูผลผลิตต้นไม้ของคุณหรือยัง?
+              </p>
+              <button
+                onClick={handleTriggerSummary}
+                className="w-full bg-gradient-to-r from-yellow-400 to-yellow-500 text-yellow-900 font-bold py-3 rounded-xl shadow-lg hover:from-yellow-500 hover:to-yellow-600 transform transition hover:scale-105"
+              >
+                เปิดดูผลผลิตเลย! ✨
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Veggie Grow - ปลูกผักด้วยมื้ออาหาร",
+  title: "Plant-based Made Easy แพลนท์เบสง่ายๆ แค่จานเดิมเพิ่มผัก",
   description: "Plant your meals and watch them grow!",
 };
 
