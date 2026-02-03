@@ -20,7 +20,116 @@
 }
 
 body {
-  background: var(--background);
+  background: #f0fdf4; /* Green-50 */
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: "Kanit", sans-serif;
+}
+
+/* Custom Animations */
+.plant-container {
+  transition: all 0.5s ease-in-out;
+}
+
+.bounce-anim {
+  animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+  0%,
+  100% {
+    transform: translateY(-5%);
+  }
+  50% {
+    transform: translateY(0);
+  }
+}
+
+.grow-anim {
+  animation: grow 1s ease-out;
+}
+
+@keyframes grow {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Checkbox Styling */
+.veggie-checkbox:checked + div {
+  border-color: #22c55e;
+  background-color: #dcfce7;
+  transform: scale(1.05);
+}
+
+/* Final Card Gradient */
+.social-card {
+  background: linear-gradient(135deg, #a7f3d0 0%, #34d399 100%);
+}
+
+/* Sparkle Animation */
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+.sparkle {
+  animation: twinkle 1.5s infinite ease-in-out;
+}
+.fruit-decoration {
+  animation: bounce 3s infinite ease-in-out;
+}
+
+/* Floating Animation for Cover */
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-15px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+.float-anim {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Typewriter Cursor */
+.cursor-blink {
+  animation: blink 1s infinite;
+}
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
 }
