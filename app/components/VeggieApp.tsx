@@ -357,22 +357,7 @@ export default function VeggieApp() {
 
     return (
       <div className="p-6 flex flex-col items-center flex-grow h-full w-full">
-        {/* Header / Branding */}
-        <div className="absolute top-2 right-2 z-50 flex items-center gap-2 p-1.5 bg-white/90 backdrop-blur-sm rounded-xl shadow-sm border border-green-100 max-w-[220px]">
-          <div className="flex flex-col items-end leading-tight">
-            <span className="text-[10px] font-bold text-green-800 uppercase tracking-wide">
-              Plant-based Made Easy
-            </span>
-            <span className="text-[8px] text-green-600 whitespace-nowrap font-medium">
-              แพลนท์เบสง่ายๆ แค่จานเดิมเพิ่มผัก
-            </span>
-          </div>
-          <img
-            src="https://i.postimg.cc/pXVN3PVk/Untitled-Artwork.png"
-            alt="Logo"
-            className="w-8 h-8 rounded-full border border-green-200 shadow-sm"
-          />
-        </div>
+        {/* Header / Branding - REMOVED from here, moved to global */}
 
         <div className="w-full bg-green-600 p-4 text-center rounded-xl mb-4 mt-8">
           <h1 className="text-2xl font-bold text-white">
@@ -580,6 +565,23 @@ export default function VeggieApp() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 font-['Kanit'] bg-[#f0fdf4]">
       <div className="w-full max-w-md bg-white rounded-3xl shadow-xl overflow-hidden border-4 border-green-100 min-h-[600px] flex flex-col relative h-[800px]">
+        {/* Persistent Branding (Top Right) */}
+        <div className="absolute top-2 right-2 z-50 flex items-center gap-2 p-1.5 bg-white/90 backdrop-blur-sm rounded-xl shadow-sm border border-green-100 max-w-[220px]">
+          <div className="flex flex-col items-end leading-tight">
+            <span className="text-[10px] font-bold text-green-800 uppercase tracking-wide">
+              Plant-based Made Easy
+            </span>
+            <span className="text-[8px] text-green-600 whitespace-nowrap font-medium">
+              แพลนท์เบสง่ายๆ แค่จานเดิมเพิ่มผัก
+            </span>
+          </div>
+          <img
+            src="https://i.postimg.cc/pXVN3PVk/Untitled-Artwork.png"
+            alt="Logo"
+            className="w-8 h-8 rounded-full border border-green-200 shadow-sm"
+          />
+        </div>
+
         {view === "intro" && renderIntro()}
         {view === "dialogue" && renderDialogue()}
         {view === "game" && renderGame()}
