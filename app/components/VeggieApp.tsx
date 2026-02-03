@@ -787,11 +787,25 @@ export default function VeggieApp({ user }: { user: any }) {
       </div>
 
       {/* Logout (Top Left) */}
-      <form action={handleSignOut} className="absolute top-4 left-4 z-20">
-        <button className="p-2 bg-white/80 backdrop-blur-sm rounded-full text-gray-400 hover:text-red-500 shadow-sm border border-green-50 transition-colors">
-          <LogOut size={18} />
+      <div className="absolute top-4 left-4 z-20 flex gap-2">
+        <form action={handleSignOut}>
+          <button className="p-2 bg-white/80 backdrop-blur-sm rounded-full text-gray-400 hover:text-red-500 shadow-sm border border-green-50 transition-colors">
+            <LogOut size={18} />
+          </button>
+        </form>
+        {/* Undo/Reset Intro for Testing */}
+        <button
+          onClick={() => {
+            const storageKey = `veggie_intro_seen_${user?.id}`;
+            localStorage.removeItem(storageKey);
+            setView("intro");
+          }}
+          className="p-2 bg-white/80 backdrop-blur-sm rounded-full text-gray-400 hover:text-blue-500 shadow-sm border border-green-50 transition-colors"
+          title="เล่น Intro ใหม่"
+        >
+          <History size={18} />
         </button>
-      </form>
+      </div>
 
       {/* Floating Background Elements */}
       <div className="absolute inset-0 pointer-events-none select-none overflow-hidden z-0">

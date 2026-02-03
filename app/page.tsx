@@ -8,7 +8,8 @@ export default async function Page() {
   const userId = cookieStore.get("userId")?.value;
 
   if (!userId) {
-    redirect("/login");
+    // Redirect to auto-create guest account instead of login
+    redirect("/api/auth/guest");
   }
 
   const user = await prisma.user.findUnique({
@@ -16,7 +17,8 @@ export default async function Page() {
   });
 
   if (!user) {
-    redirect("/login");
+    // If cookie exists but user not found (deleted?), re-create guest
+    redirect("/api/auth/guest");
   }
 
   return <VeggieApp user={user} />;
